@@ -5,15 +5,26 @@ const config: Config = {
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    // Add additional directories if needed
   ],
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        // primary: "#1DA1F2",
+        // secondary: "#14171A",
+        // accent: "#FFAD1F",
       },
     },
   },
-  plugins: [],
+  daisyui: {
+    themes: [
+      "light",
+      // "dark",
+      // Custom themes can be added here
+    ],
+  },
+  plugins: [require("daisyui")],
+  
 };
+
 export default config;

@@ -1,101 +1,126 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+
+interface NewsArticle {
+  author: string | null;
+  title: string;
+  description: string | null;
+  url: string;
+  urlToImage: string | null;
+  publishedAt: string;
+  source: {
+    name: string;
+  };
+}
+
+interface NewsResponse {
+  articles: NewsArticle[];
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const apiKey = "345ad07025394e39908c0fe5143db723";
+  const query = "technology";
+  const url = `https://newsapi.org/v2/everything?q=${query}&apiKey=${apiKey}`;
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData(url: string) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data: NewsResponse = await response.json();
+        console.log(data);
+        setNews(data.articles);
+      } catch (error: any) {
+        console.error(error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData(url);
+  }, [url]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+  if (error) return <div>Error: {error}</div>;
+
+  return (
+    <main className="flex flex-col items-center justify-center px-6 text-neutral-950">
+      <section>
+        {news.length > 0 ? (
+          news.map((singleNews, index) => (
+            <>
+              <article key={index} className="w-[800px]">
+                {/* author and source */}
+                <div className="mb-3 flex items-center justify-start">
+                  <img
+                    src="/panda.png" // Using <img> tag for local images
+                    alt="Author's logo"
+                    width={24} // Adjust width according to your needs
+                    height={24} // Adjust height according to your needs
+                    className="mr-2 inline-block"
+                  />
+                  <p className="inline-block text-xs">
+                    {singleNews.author || "Unknown Author"}{" "}
+                    <span className="inline text-neutral-400">from</span>{" "}
+                    {singleNews.source.name}
+                  </p>
+                </div>
+                {/* title and description */}
+                <div className="mb-3 flex">
+                  <div className="flex-1">
+                    <h2 className="mb-2 text-2xl font-bold leading-7">
+                      {singleNews.title}
+                    </h2>
+                    <p className="leading-5 text-neutral-500">
+                      {singleNews.description}
+                    </p>
+                  </div>
+
+                  {singleNews.urlToImage && (
+                    <img
+                      src={singleNews.urlToImage} // Using <img> tag for external images
+                      alt={singleNews.title}
+                      className="h-36 w-36 ml-3 object-cover" // Control image size here
+                    />
+                  )}
+                </div>
+                {/* date and source page link */}
+                <div className="flex text-xs">
+                  <p className="mr-5">
+                    Published on:{" "}
+                    {new Date(singleNews.publishedAt).toLocaleDateString()}
+                  </p>{" "}
+                  <a
+                    href={singleNews.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-700 underline"
+                  >
+                    Read more
+                  </a>{" "}
+                </div>
+              </article>
+              {/* breaker */}
+              <hr className="my-8 h-[1px] w-full border-none bg-neutral-200" />
+            </>
+          ))
+        ) : (
+          <p>No news articles found.</p> // Message for no articles
+        )}
+      </section>
+    </main>
   );
 }
