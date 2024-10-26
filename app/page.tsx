@@ -1,48 +1,43 @@
+// app/page.tsx
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-
-interface NewsArticle {
-  author: string | null;
-  title: string;
-  description: string | null;
-  url: string;
-  urlToImage: string | null;
-  publishedAt: string;
-  source: {
-    name: string;
-  };
-}
-
-interface NewsResponse {
-  articles: NewsArticle[];
-}
+import NewsArticleComponent from "../components/NewsArticle";
+import { fetchNews, NewsArticle as NewsArticleType } from "../lib/fetchNews";
 
 export default function Home() {
-  const apiKey = "345ad07025394e39908c0fe5143db723";
-  const query = "technology";
-  const url = `https://newsapi.org/v2/everything?q=${query}&apiKey=${apiKey}`;
-
-  const [news, setNews] = useState<NewsArticle[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [news, setNews] = useState<NewsArticleType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [initialCount, setInitialCount] = useState(4); // State to store the initial article count
+  const [articlesPerPage, setArticlesPerPage] = useState(5); // Control articles per page
   const observer = useRef<IntersectionObserver | null>(null);
 
-  // Function to fetch news articles based on page
-  const fetchNews = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${url}&page=${page}&pageSize=10`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+  const apiKey = process.env.API_KEY;
 
-      const data: NewsResponse = await response.json();
-      console.log(data);
-      setNews((prevNews) => [
-        ...prevNews,
-        ...data.articles.filter(
+  // Infinite Scroll Observer
+  const handleObserver = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) setPage((prevPage) => prevPage + 1);
+      });
+      if (node) observer.current.observe(node);
+    },
+    [loading],
+  );
+
+  // Fetch news articles when the page changes
+  useEffect(() => {
+    const loadNews = async () => {
+      try {
+        setLoading(true);
+        const newArticles = await fetchNews(page, apiKey);
+
+        // Filter articles to ensure all required fields are present
+        const filteredArticles = newArticles.filter(
           (article) =>
             article.author &&
             article.source.name &&
@@ -51,108 +46,50 @@ export default function Home() {
             article.urlToImage &&
             article.url &&
             article.publishedAt,
-        ),
-      ]); // Append new articles to existing list, filtering them
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An error occurred";
-      console.error(errorMessage);
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [url, page]);
+        );
 
-  // Set up infinite scroll observer
-  const lastNewsElementRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (loading) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-          setPage((prevPage) => prevPage + 1);
+        // Set initial count on the first page load
+        if (page === 1) {
+          setInitialCount(filteredArticles.length); // Update the initial count with the number of articles fetched
         }
-      });
-      if (node) observer.current.observe(node);
-    },
-    [loading],
-  );
 
-  // Fetch initial news articles and subsequent pages when page changes
-  useEffect(() => {
-    fetchNews();
-  }, [fetchNews]);
+        // Append new filtered articles to the existing list
+        setNews((prev) => [...prev, ...filteredArticles]);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadNews();
+  }, [page]);
+
+  // Handle change in articles per page
+  const handleArticlesPerPageChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    setArticlesPerPage(Number(e.target.value));
+    setPage(1); // Reset page to 1 to fetch new articles based on selection
+    setNews([]); // Clear previous articles
+  };
 
   if (error) return <div>Error: {error}</div>;
 
+  // Calculate how many articles to display based on articlesPerPage and current page
+  const displayedArticles = news.slice(0, articlesPerPage * page);
+
   return (
-    <main className="flex flex-col items-center justify-center px-6 text-neutral-950">
+    <main className="flex flex-col items-center px-6 text-neutral-950">
       <section>
-        {news.map((singleNews, index) => (
-          <article
+        {displayedArticles.map((article, index) => (
+          <div
             key={index}
-            className="w-[800px]"
-            ref={index === news.length - 1 ? lastNewsElementRef : null} // Attach ref to last item
+            ref={index === displayedArticles.length - 1 ? handleObserver : null}
           >
-            {/* Author and source */}
-            <div className="mb-3 flex items-center justify-start">
-              <img
-                src="/panda.png"
-                alt="Author's logo"
-                width={24}
-                height={24}
-                className="mr-2 inline-block"
-              />
-              <p className="inline-block text-xs">
-                {singleNews.author}{" "}
-                <span className="inline text-neutral-400">from</span>{" "}
-                {singleNews.source.name}
-              </p>
-            </div>
-
-            {/* Title and description */}
-            <div className="mb-3 flex">
-              <div className="flex-1">
-                <h2 className="mb-2 text-2xl font-bold leading-7">
-                  {singleNews.title}
-                </h2>
-                <p className="leading-5 text-neutral-500">
-                  {singleNews.description}
-                </p>
-              </div>
-
-              <img
-                src={singleNews.urlToImage ?? "/placeholder-image.png"}
-                alt={singleNews.title}
-                className="ml-3 h-36 w-36 object-cover"
-              />
-            </div>
-
-            {/* Date and source page link */}
-            <div className="flex text-xs">
-              <p className="mr-5">
-                Published on:{" "}
-                {new Date(singleNews.publishedAt).toLocaleDateString()}
-              </p>
-              <a
-                href={singleNews.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-700 underline"
-              >
-                Read more
-              </a>
-            </div>
-
-            {/* Divider */}
-            <hr className="my-8 h-[1px] w-full border-none bg-neutral-200" />
-          </article>
-        ))}
-        {loading && (
-          <div className="flex items-center justify-center">
-            <span className="loading loading-spinner loading-lg"></span>
+            <NewsArticleComponent article={article} />
           </div>
-        )}
+        ))}
+        {loading && <div className="loading loading-spinner loading-lg"></div>}
       </section>
     </main>
   );
