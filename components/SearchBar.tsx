@@ -1,0 +1,38 @@
+interface Props {
+  search: string;
+  setSearch: (search: string) => void;
+  handleSearch: () => void;
+  isLoading: boolean;
+}
+
+const SearchBar: React.FC<Props> = ({
+  search,
+  setSearch,
+  handleSearch,
+  isLoading,
+}) => {
+  return (
+    <div className="flex">
+      <input
+        type="text"
+        placeholder="Search here"
+        className="input input-bordered input-primary mr-2 w-full max-w-xs"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleSearch();
+          }
+        }}
+      />
+      <button
+        className={`btn btn-primary ${isLoading || !search.trim() ? "no-animation cursor-default opacity-50" : ""}`}
+        onClick={handleSearch}
+      >
+        Search
+      </button>
+    </div>
+  );
+};
+
+export default SearchBar;
