@@ -23,7 +23,7 @@ export default function Home() {
   const [page, setPage] = useState<number>(1);
   const [isLoading, setLoading] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const api = "75d54c21191f4e1abde0e90a8ef29c02";
+  const api = process.env.NEXT_PUBLIC_API_KEY;
   const loader = useRef<HTMLDivElement | null>(null);
   const initialLoad = useRef<boolean>(true);
 
