@@ -16,7 +16,7 @@ const SearchBar: React.FC<Props> = ({
       <input
         type="text"
         placeholder="Search here"
-        className="input input-bordered input-primary mr-2 w-full w-xs"
+        className="input input-bordered w-full max-w-xs mr-3"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         onKeyDown={(e) => {

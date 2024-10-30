@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import ArticleCard from "../components/ArticleCard";
 import SearchBar from "../components/SearchBar";
 import ThemeSelector from "../components/ThemeSelector";
+import Profile from "../components/ProfileIcon";
 
 interface Article {
   title: string;
@@ -111,19 +112,22 @@ export default function Home() {
 
   return (
     <>
-      <nav className="fixed flex w-full min-w-[476px] justify-between bg-primary-content p-2">
+      <nav className="fixed flex w-full min-w-[462px] justify-between bg-primary-content p-2">
         <ThemeSelector theme={theme} setTheme={setTheme} />
-        <SearchBar
-          search={search}
-          setSearch={setSearch}
-          handleSearch={handleSearch}
-          isLoading={isLoading}
-        />
+        <div className="flex gap-3">
+          <SearchBar
+            search={search}
+            setSearch={setSearch}
+            handleSearch={handleSearch}
+            isLoading={isLoading}
+          />
+          <Profile />
+        </div>
       </nav>
 
       <div
         data-theme={theme}
-        className="flex min-h-screen min-w-[476px] flex-col items-center justify-center"
+        className="flex min-h-screen min-w-[462px] flex-col items-center justify-center"
       >
         <div className="h-20" />
 
